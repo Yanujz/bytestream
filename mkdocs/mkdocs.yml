@@ -1,0 +1,97 @@
+site_name: ByteStream
+site_url: https://yanujz.github.io/bytestream
+site_description: "Header-only C++17/20 library for safe binary reading/writing with endianness handling."
+docs_dir: docs
+
+repo_url: https://github.com/yanujz/bytestream
+repo_name: yanujz/bytestream
+# adjust if your docs actually live in docs/
+edit_uri: edit/main/docs/
+
+theme:
+  name: material
+  language: en
+  icon:
+    logo: material/file-code
+    repo: fontawesome/brands/github
+  features:
+    # Navigation
+    - navigation.tabs
+    - navigation.tabs.sticky
+    - navigation.sections
+    - navigation.indexes
+    - navigation.expand
+    - navigation.top
+    - navigation.footer
+    - toc.integrate
+    # Search
+    - search.suggest
+    - search.highlight
+    # Content
+    - content.tabs.link
+    - content.code.copy
+    - content.code.select
+    - content.code.annotate
+  palette:
+    - scheme: default
+      primary: indigo
+      accent: blue
+      toggle:
+        icon: material/weather-sunny
+        name: Switch to dark mode
+    - scheme: slate
+      primary: blue grey
+      accent: blue
+      toggle:
+        icon: material/weather-night
+        name: Switch to light mode
+
+plugins:
+  - search
+
+# drop these if you don't actually have them in docs/styles/
+extra_css:
+  - styles/tasklist.css
+  - styles/iframe.css
+
+markdown_extensions:
+  - admonition
+  - attr_list
+  - def_list
+  - md_in_html
+  - tables
+  - pymdownx.details
+  - pymdownx.superfences
+  - pymdownx.inlinehilite
+  - pymdownx.highlight:
+      anchor_linenums: true
+      linenums_style: table
+      pygments_lang_class: true
+  - pymdownx.tabbed:
+      alternate_style: true
+  - pymdownx.emoji:
+      emoji_index: !!python/name:material.extensions.emoji.twemoji
+      emoji_generator: !!python/name:material.extensions.emoji.to_svg
+  - pymdownx.tasklist:
+      custom_checkbox: true
+      clickable_checkbox: true
+  - toc:
+      permalink: true
+      toc_depth: 3
+
+extra:
+  generator: false
+
+nav:
+  - Home: index.md
+  - Guide:
+      - guide/index.md
+      - Building: guide/building.md
+      - Quick Start: guide/quick_start.md
+      - Roadmap: guide/roadmap.md
+  - API Reference:
+      - api/index.md
+      - Core API: api/reference.md
+  - Reports:
+      - Coverage: guide/coverage.md
+  - Changelog: changelog.md
