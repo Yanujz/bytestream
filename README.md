@@ -1,6 +1,6 @@
 # ByteStream
 
-[![Build](https://img.shields.io/github/actions/workflow/status/yanujz/bytestream/ci.yml?label=build)](https://github.com/yanujz/bytestream/actions)
+[![Build](https://img.shields.io/github/actions/workflow/status/yanujz/bytestream/ci.yml?label=build&branch=main)](https://github.com/yanujz/bytestream/actions)
 ![C++](https://img.shields.io/badge/C%2B%2B-17-blue)
 ![License](https://img.shields.io/badge/License-MIT-green.svg)
 ![Build System](https://img.shields.io/badge/build-CMake-blueviolet)
