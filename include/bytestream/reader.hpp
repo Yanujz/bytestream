@@ -2,7 +2,6 @@
 #define BYTESTREAM_READER_HPP
 
 #include <bytestream/config.hpp>
-#include <limits>
 #include <cstring>
 
 namespace bytestream {
@@ -11,241 +10,210 @@ class Reader {
 private:
     const std::byte*    data_;
     std::size_t         size_;
-    mutable std::size_t position_;
+    mutable std::size_t pos_;
 
-    void check_bounds(std::size_t bytes) const {
-        if (position_ + bytes > size_) {
-            throw UnderflowException(
-                "Attempted to read " + std::to_string(bytes) +
-                " bytes at position " + std::to_string(position_) +
-                " (size: " + std::to_string(size_) + ")"
-            );
+    void check(std::size_t n) const {
+        if (pos_ + n > size_) {
+            throw UnderflowException("read past end");
         }
     }
 
 public:
-    // ---------------------------------------------------------------------
-    // ctors
-    // ---------------------------------------------------------------------
     constexpr Reader() noexcept
-        : data_(nullptr), size_(0), position_(0) {}
+        : data_(nullptr), size_(0), pos_(0) {}
 
     constexpr Reader(const void* data, std::size_t size) noexcept
-        : data_(static_cast<const std::byte*>(data)), size_(size), position_(0) {}
+        : data_(static_cast<const std::byte*>(data)), size_(size), pos_(0) {}
 
-    // from span<const byte>
     constexpr Reader(bytestream::span<const std::byte> s) noexcept
-        : data_(s.data()), size_(s.size()), position_(0) {}
+        : data_(s.data()), size_(s.size()), pos_(0) {}
 
-    // from span<const T>
     template<typename T>
     constexpr Reader(bytestream::span<const T> s) noexcept
         : data_(reinterpret_cast<const std::byte*>(s.data())),
-          size_(s.size_bytes()), position_(0) {}
+          size_(s.size_bytes()),
+          pos_(0) {}
 
-    // from span<T>  (this fixes Reader reader(span<uint8_t>) in tests)
+    // also allow non-const span<T>
     template<typename T>
     constexpr Reader(bytestream::span<T> s) noexcept
         : data_(reinterpret_cast<const std::byte*>(s.data())),
-          size_(s.size_bytes()), position_(0) {}
+          size_(s.size_bytes()),
+          pos_(0) {}
 
-    // ---------------------------------------------------------------------
-    // properties
-    // ---------------------------------------------------------------------
-    [[nodiscard]] constexpr const std::byte* data() const noexcept { return data_; }
-    [[nodiscard]] constexpr std::size_t size() const noexcept { return size_; }
-    [[nodiscard]] constexpr std::size_t position() const noexcept { return position_; }
-    [[nodiscard]] constexpr std::size_t remaining() const noexcept { return size_ - position_; }
-    [[nodiscard]] constexpr bool empty() const noexcept { return size_ == 0; }
-    [[nodiscard]] constexpr bool exhausted() const noexcept { return position_ >= size_; }
+    std::size_t size() const noexcept { return size_; }
+    std::size_t position() const noexcept { return pos_; }
+    std::size_t remaining() const noexcept { return size_ - pos_; }
+    bool        empty() const noexcept { return size_ == 0; }
+    bool        exhausted() const noexcept { return pos_ >= size_; }
 
-    // ---------------------------------------------------------------------
-    // position
-    // ---------------------------------------------------------------------
-    void seek(std::size_t pos) const {
-        if (pos > size_) {
-            throw std::out_of_range("Seek position exceeds size");
+    void seek(std::size_t p) const {
+        if (p > size_) {
+            throw std::out_of_range("seek past end");
         }
-        position_ = pos;
+        pos_ = p;
     }
 
-    constexpr void rewind() const noexcept { position_ = 0; }
+    void rewind() const noexcept { pos_ = 0; }
 
-    void skip(std::size_t bytes) const {
-        check_bounds(bytes);
-        position_ += bytes;
+    void skip(std::size_t n) const {
+        check(n);
+        pos_ += n;
     }
 
     void align(std::size_t alignment) const {
         assert(alignment > 0 && detail::has_single_bit(alignment));
-        std::size_t aligned = (position_ + alignment - 1) & ~(alignment - 1);
+        std::size_t aligned = (pos_ + alignment - 1) & ~(alignment - 1);
         seek(aligned);
     }
 
-    [[nodiscard]] bool is_aligned(std::size_t alignment) const noexcept {
-        return (position_ % alignment) == 0;
+    bool is_aligned(std::size_t alignment) const noexcept {
+        return (pos_ % alignment) == 0;
     }
 
-    // ---------------------------------------------------------------------
-    // subview
-    // ---------------------------------------------------------------------
-    [[nodiscard]] Reader subview(std::size_t offset,
-                                 std::size_t length = static_cast<std::size_t>(-1)) const
-    {
+    Reader subview(std::size_t offset, std::size_t length = static_cast<std::size_t>(-1)) const {
         if (offset > size_) {
-            throw std::out_of_range("Subview offset exceeds buffer size");
+            throw std::out_of_range("subview offset");
         }
-        std::size_t actual = (length == static_cast<std::size_t>(-1))
-                                 ? (size_ - offset)
-                                 : length;
-        if (offset + actual > size_) {
-            throw std::out_of_range("Subview extends beyond buffer");
+        std::size_t len = (length == static_cast<std::size_t>(-1)) ? (size_ - offset) : length;
+        if (offset + len > size_) {
+            throw std::out_of_range("subview length");
         }
-        return Reader(data_ + offset, actual);
+        return Reader(data_ + offset, len);
     }
 
-    // ---------------------------------------------------------------------
-    // arithmetic reads
-    // ---------------------------------------------------------------------
-    template<typename T, detail::enable_if_arithmetic_t<T> = 0>
-    [[nodiscard]] T read() const {
-        check_bounds(sizeof(T));
-        T value;
-        std::memcpy(&value, data_ + position_, sizeof(T));
-        position_ += sizeof(T);
-        return value;
+    template<typename T>
+    T read() const {
+        static_assert(detail::is_arithmetic<T>::value, "T must be arithmetic (not bool/char)");
+        check(sizeof(T));
+        T v;
+        std::memcpy(&v, data_ + pos_, sizeof(T));
+        pos_ += sizeof(T);
+        return v;
     }
 
-    template<typename T, detail::enable_if_arithmetic_t<T> = 0>
-    [[nodiscard]] T read_le() const {
+    template<typename T>
+    T read_le() const {
         T v = read<T>();
         if constexpr (sizeof(T) > 1) {
-            if constexpr (!is_little_endian()) {
-                return byteswap(v);
+            if (!is_little_endian()) {
+                v = byteswap(v);
             }
         }
         return v;
     }
 
-    template<typename T, detail::enable_if_arithmetic_t<T> = 0>
-    [[nodiscard]] T read_be() const {
+    template<typename T>
+    T read_be() const {
         T v = read<T>();
         if constexpr (sizeof(T) > 1) {
-            if constexpr (is_little_endian()) {
-                return byteswap(v);
+            if (is_little_endian()) {
+                v = byteswap(v);
             }
         }
         return v;
     }
 
-    // ---------------------------------------------------------------------
-    // peek
-    // ---------------------------------------------------------------------
-    template<typename T, detail::enable_if_arithmetic_t<T> = 0>
-    [[nodiscard]] T peek() const {
-        auto saved = position_;
+    template<typename T>
+    T peek() const {
+        auto old = pos_;
         T v = read<T>();
-        position_ = saved;
+        pos_ = old;
         return v;
     }
 
-    template<typename T, detail::enable_if_arithmetic_t<T> = 0>
-    [[nodiscard]] T peek_le() const {
-        auto saved = position_;
+    template<typename T>
+    T peek_le() const {
+        auto old = pos_;
         T v = read_le<T>();
-        position_ = saved;
+        pos_ = old;
         return v;
     }
 
-    template<typename T, detail::enable_if_arithmetic_t<T> = 0>
-    [[nodiscard]] T peek_be() const {
-        auto saved = position_;
+    template<typename T>
+    T peek_be() const {
+        auto old = pos_;
         T v = read_be<T>();
-        position_ = saved;
+        pos_ = old;
         return v;
     }
 
-    // ---------------------------------------------------------------------
-    // bulk
-    // ---------------------------------------------------------------------
-    void read_bytes(bytestream::span<std::byte> dest) const {
-        check_bounds(dest.size());
-        std::memcpy(dest.data(), data_ + position_, dest.size());
-        position_ += dest.size();
+    void read_bytes(bytestream::span<std::byte> dst) const {
+        check(dst.size());
+        std::memcpy(dst.data(), data_ + pos_, dst.size());
+        pos_ += dst.size();
     }
 
-    void read_bytes(void* dest, std::size_t count) const {
-        check_bounds(count);
-        std::memcpy(dest, data_ + position_, count);
-        position_ += count;
+    void read_bytes(void* dst, std::size_t n) const {
+        check(n);
+        std::memcpy(dst, data_ + pos_, n);
+        pos_ += n;
     }
 
-    template<typename T, detail::enable_if_arithmetic_t<T> = 0>
-    void read_array(bytestream::span<T> dest) const {
-        check_bounds(dest.size_bytes());
-        std::memcpy(dest.data(), data_ + position_, dest.size_bytes());
-        position_ += dest.size_bytes();
+    template<typename T>
+    void read_array(bytestream::span<T> dst) const {
+        static_assert(detail::is_arithmetic<T>::value, "T must be arithmetic");
+        check(dst.size_bytes());
+        std::memcpy(dst.data(), data_ + pos_, dst.size_bytes());
+        pos_ += dst.size_bytes();
     }
 
-    template<typename T, detail::enable_if_arithmetic_t<T> = 0>
-    void read_array_le(bytestream::span<T> dest) const {
+    template<typename T>
+    void read_array_le(bytestream::span<T> dst) const {
         if constexpr (is_little_endian() || sizeof(T) == 1) {
-            read_array(dest);
+            read_array(dst);
         } else {
-            for (auto &e : dest) {
-                e = read_le<T>();
+            for (auto &x : dst) {
+                x = read_le<T>();
             }
         }
     }
 
-    template<typename T, detail::enable_if_arithmetic_t<T> = 0>
-    void read_array_be(bytestream::span<T> dest) const {
+    template<typename T>
+    void read_array_be(bytestream::span<T> dst) const {
         if constexpr (is_big_endian() || sizeof(T) == 1) {
-            read_array(dest);
+            read_array(dst);
         } else {
-            for (auto &e : dest) {
-                e = read_be<T>();
+            for (auto &x : dst) {
+                x = read_be<T>();
             }
         }
     }
 
-    // ---------------------------------------------------------------------
-    // strings
-    // ---------------------------------------------------------------------
-    [[nodiscard]] std::string read_string(std::size_t length) const {
-        check_bounds(length);
-        std::string res(length, '\0');
-        std::memcpy(res.data(), data_ + position_, length);
-        position_ += length;
-        return res;
+    std::string read_string(std::size_t len) const {
+        check(len);
+        std::string s(len, '\0');
+        std::memcpy(s.data(), data_ + pos_, len);
+        pos_ += len;
+        return s;
     }
 
-    [[nodiscard]] std::string read_sized_string_le() const {
-        uint32_t len = read_le<uint32_t>();
+    std::string read_sized_string_le() const {
+        std::uint32_t len = read_le<std::uint32_t>();
         return read_string(len);
     }
 
-    [[nodiscard]] std::string read_sized_string_be() const {
-        uint32_t len = read_be<uint32_t>();
+    std::string read_sized_string_be() const {
+        std::uint32_t len = read_be<std::uint32_t>();
         return read_string(len);
     }
 
-    [[nodiscard]] std::string read_cstring() const {
-        const char* start = reinterpret_cast<const char*>(data_ + position_);
+    std::string read_cstring() const {
+        const char* start = reinterpret_cast<const char*>(data_ + pos_);
         const char* end   = static_cast<const char*>(std::memchr(start, 0, remaining()));
         if (!end) {
-            throw UnderflowException("No null terminator found");
+            throw UnderflowException("no null terminator");
         }
         std::size_t len = static_cast<std::size_t>(end - start);
-        std::string res(start, len);
-        position_ += len + 1;
-        return res;
+        std::string s(start, len);
+        pos_ += len + 1;
+        return s;
     }
 
-    [[nodiscard]] std::string_view view_string(std::size_t length) const {
-        check_bounds(length);
-        std::string_view v(reinterpret_cast<const char*>(data_ + position_), length);
-        position_ += length;
+    std::string_view view_string(std::size_t len) const {
+        check(len);
+        std::string_view v(reinterpret_cast<const char*>(data_ + pos_), len);
+        pos_ += len;
         return v;
     }
 };

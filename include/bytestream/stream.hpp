@@ -1,60 +1,42 @@
-// include/bytestream/stream.hpp
 #ifndef BYTESTREAM_STREAM_HPP
 #define BYTESTREAM_STREAM_HPP
 
-#include <bytestream/config.hpp>
+#include <bytestream/reader.hpp>
+#include <bytestream/writer.hpp>
 
 namespace bytestream {
-// Forward declarations
-class Reader;
-class Writer;
 
-/**
- * @brief Bidirectional view combining Reader and Writer functionality
- *
- * Provides both read and write access to binary data with optional
- * shared position tracking.
- */
 class Stream {
 private:
-    std::byte* data_;
-    std::size_t size_;
-    mutable std::size_t position_;
+    std::byte*          data_;
+    std::size_t         size_;
+    mutable std::size_t pos_;
 
 public:
     constexpr Stream(void* data, std::size_t size) noexcept
-        : data_(static_cast<std::byte*>(data)), size_(size), position_(0)
-    {
+        : data_(static_cast<std::byte*>(data)), size_(size), pos_(0) {}
+
+    Reader reader() const noexcept {
+        return Reader(data_, size_);
     }
 
-    // Get separate Reader and Writer views
-    [[nodiscard]] Reader reader() const noexcept;
-
-    [[nodiscard]] Writer writer() const noexcept;
-
-    // Shared position management
-    [[nodiscard]] constexpr std::size_t position() const noexcept
-    {
-        return position_;
+    Writer writer() const noexcept {
+        return Writer(data_, size_);
     }
 
-    void seek(std::size_t pos) const
-    {
-        if(pos > size_)
-        {
-            throw std::out_of_range(
-                      "Seek position " + std::to_string(pos) +
-                      " exceeds size " + std::to_string(size_)
-                      );
-        }
-        position_ = pos;
+    std::size_t position() const noexcept {
+        return pos_;
     }
 
-    constexpr void rewind() const noexcept
-    {
-        position_ = 0;
+    void seek(std::size_t p) const {
+        pos_ = p;
+    }
+
+    void rewind() const noexcept {
+        pos_ = 0;
     }
 };
+
 } // namespace bytestream
 
 #endif // BYTESTREAM_STREAM_HPP

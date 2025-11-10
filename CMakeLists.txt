@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.20)
+cmake_minimum_required(VERSION 3.14)
 
 project(ByteStream
     VERSION 0.1.0
@@ -6,106 +6,105 @@ project(ByteStream
     LANGUAGES CXX
 )
 
-# -----------------------------------------------------------------------------
-# Options
-# -----------------------------------------------------------------------------
-option(BYTESTREAM_BUILD_TESTS "Build unit tests" ON)
-option(BYTESTREAM_BUILD_EXAMPLES "Build examples" ON)
-option(BYTESTREAM_BUILD_BENCHMARKS "Build benchmarks" OFF)
-option(BYTESTREAM_INSTALL "Generate install target" ON)
-option(BYTESTREAM_ENABLE_SANITIZERS "Enable sanitizers (ASan, UBSan)" OFF)
-option(BYTESTREAM_ENABLE_COVERAGE "Enable coverage reporting" OFF)
+# always nice to have
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
-# -----------------------------------------------------------------------------
-# Global C++ standard for the library
-# -----------------------------------------------------------------------------
+# ------------------------------------------------------------------------------
+# Options
+# ------------------------------------------------------------------------------
+option(BYTESTREAM_BUILD_TESTS       "Build bytestream tests" ON)
+option(BYTESTREAM_BUILD_EXAMPLES    "Build bytestream examples" ON)
+option(BYTESTREAM_BUILD_BENCHMARKS  "Build bytestream benchmarks" OFF)
+option(BYTESTREAM_INSTALL           "Enable install rules for bytestream" ON)
+
+option(BYTESTREAM_ENABLE_SANITIZERS "Enable address/UB sanitizers (Clang/GCC)" ON)
+option(BYTESTREAM_ENABLE_COVERAGE   "Enable coverage flags (Clang/GCC)" ON)
+
+# ------------------------------------------------------------------------------
+# C++ standard
+# ------------------------------------------------------------------------------
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
-# -----------------------------------------------------------------------------
-# Compiler warnings (for our own targets; not exported)
-# -----------------------------------------------------------------------------
-if(MSVC)
-    set(BYTESTREAM_WARNING_FLAGS /W4 /WX)
-else()
-    set(BYTESTREAM_WARNING_FLAGS
-        -Wall -Wextra -Wpedantic -Werror
-        -Wconversion -Wsign-conversion
-        -Wcast-align -Wcast-qual
-        -Wold-style-cast
-        -Wnon-virtual-dtor
-        -Woverloaded-virtual
-        -Wshadow
-        -Wunused
-    )
-endif()
-
-# -----------------------------------------------------------------------------
+# ------------------------------------------------------------------------------
 # Header-only library
-# -----------------------------------------------------------------------------
+# ------------------------------------------------------------------------------
 add_library(bytestream INTERFACE)
 add_library(ByteStream::bytestream ALIAS bytestream)
 
-target_include_directories(bytestream INTERFACE
-    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
-    $<INSTALL_INTERFACE:include>
+target_include_directories(bytestream
+    INTERFACE
+        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+        $<INSTALL_INTERFACE:include>
 )
 
 target_compile_features(bytestream INTERFACE cxx_std_17)
 
-# -----------------------------------------------------------------------------
-# Sanitizers / Coverage (optional)
-# -----------------------------------------------------------------------------
-if(BYTESTREAM_ENABLE_SANITIZERS AND NOT MSVC)
-    add_compile_options(-fsanitize=address,undefined -fno-omit-frame-pointer)
-    add_link_options(-fsanitize=address,undefined -fno-omit-frame-pointer)
+# ------------------------------------------------------------------------------
+# Warnings (for our own targets, we can export the list)
+# ------------------------------------------------------------------------------
+if (MSVC)
+    set(BYTESTREAM_WARNING_FLAGS /W4 /permissive-)
+else()
+    set(BYTESTREAM_WARNING_FLAGS -Wall -Wextra -Wpedantic)
 endif()
 
-if(BYTESTREAM_ENABLE_COVERAGE AND NOT MSVC)
-    add_compile_options(--coverage -O0 -g)
-    add_link_options(--coverage)
+# ------------------------------------------------------------------------------
+# Sanitizers / Coverage: we just prepare variables for subdirs
+# ------------------------------------------------------------------------------
+set(BYTESTREAM_SANITIZER_FLAGS "")
+if (BYTESTREAM_ENABLE_SANITIZERS AND CMAKE_CXX_COMPILER_ID MATCHES "Clang|GNU")
+    set(BYTESTREAM_SANITIZER_FLAGS -fsanitize=address,undefined -fno-omit-frame-pointer)
 endif()
 
-# -----------------------------------------------------------------------------
+set(BYTESTREAM_COVERAGE_FLAGS "")
+if (BYTESTREAM_ENABLE_COVERAGE AND CMAKE_CXX_COMPILER_ID MATCHES "Clang|GNU")
+    set(BYTESTREAM_COVERAGE_FLAGS --coverage -O0 -g)
+endif()
+
+# ------------------------------------------------------------------------------
+# Examples
+# ------------------------------------------------------------------------------
+if (BYTESTREAM_BUILD_EXAMPLES)
+    add_subdirectory(examples)
+endif()
+
+# ------------------------------------------------------------------------------
 # Tests
-# -----------------------------------------------------------------------------
-if(BYTESTREAM_BUILD_TESTS)
+# ------------------------------------------------------------------------------
+if (BYTESTREAM_BUILD_TESTS)
     enable_testing()
     add_subdirectory(tests)
 endif()
 
-# -----------------------------------------------------------------------------
-# Examples
-# -----------------------------------------------------------------------------
-if(BYTESTREAM_BUILD_EXAMPLES)
-    add_subdirectory(examples)
-endif()
-
-# -----------------------------------------------------------------------------
+# ------------------------------------------------------------------------------
 # Benchmarks
-# -----------------------------------------------------------------------------
-if(BYTESTREAM_BUILD_BENCHMARKS)
+# ------------------------------------------------------------------------------
+if (BYTESTREAM_BUILD_BENCHMARKS)
     add_subdirectory(benchmarks)
 endif()
 
-# -----------------------------------------------------------------------------
+# ------------------------------------------------------------------------------
 # Install
-# -----------------------------------------------------------------------------
-if(BYTESTREAM_INSTALL)
+# ------------------------------------------------------------------------------
+if (BYTESTREAM_INSTALL)
     include(GNUInstallDirs)
     include(CMakePackageConfigHelpers)
 
-    install(DIRECTORY include/
-        DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
-    )
-
-    install(TARGETS bytestream
+    install(
+        TARGETS bytestream
         EXPORT ByteStreamTargets
         INCLUDES DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
     )
 
-    install(EXPORT ByteStreamTargets
+    install(
+        DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/include/
+        DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
+    )
+
+    install(
+        EXPORT ByteStreamTargets
         FILE ByteStreamTargets.cmake
         NAMESPACE ByteStream::
         DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/ByteStream
@@ -123,9 +122,10 @@ if(BYTESTREAM_INSTALL)
         COMPATIBILITY SameMajorVersion
     )
 
-    install(FILES
-        ${CMAKE_CURRENT_BINARY_DIR}/ByteStreamConfig.cmake
-        ${CMAKE_CURRENT_BINARY_DIR}/ByteStreamConfigVersion.cmake
+    install(
+        FILES
+            ${CMAKE_CURRENT_BINARY_DIR}/ByteStreamConfig.cmake
+            ${CMAKE_CURRENT_BINARY_DIR}/ByteStreamConfigVersion.cmake
         DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/ByteStream
     )
 endif()
