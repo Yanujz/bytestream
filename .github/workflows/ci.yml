@@ -32,7 +32,14 @@ jobs:
       - name: Build
         run: cmake --build build --config ${{ matrix.build_type }}
 
-      - name: Test
+      # single-config (Linux/macOS): no --config
+      - name: Test (Unix)
+        if: runner.os != 'Windows'
         working-directory: build
-        # ctest needs --config on multi-config generators (Windows)
+        run: ctest --output-on-failure
+
+      # multi-config (Windows): needs --config
+      - name: Test (Windows)
+        if: runner.os == 'Windows'
+        working-directory: build
         run: ctest --output-on-failure --config ${{ matrix.build_type }}
