@@ -58,6 +58,11 @@ target_include_directories(bytestream_tests
         ${CMAKE_BINARY_DIR}/include
 )
 
+# MSVC: silence strcpy etc. for the main test exe
+if (MSVC)
+    target_compile_definitions(bytestream_tests PRIVATE _CRT_SECURE_NO_WARNINGS)
+endif()
+
 # propagate coverage from top-level
 if (BYTESTREAM_ENABLE_COVERAGE AND CMAKE_CXX_COMPILER_ID MATCHES "Clang|GNU")
     target_compile_options(bytestream_tests PRIVATE ${BYTESTREAM_COVERAGE_FLAGS})
@@ -81,7 +86,7 @@ gtest_discover_tests(bytestream_tests
 )
 
 # ------------------------------------------------------------------------------
-# optional: per-file test executables (same style as your other project)
+# optional: per-file test executables
 # ------------------------------------------------------------------------------
 foreach(test_src ${BYTESTREAM_TEST_SOURCES})
     get_filename_component(test_name ${test_src} NAME_WE)
@@ -103,6 +108,10 @@ foreach(test_src ${BYTESTREAM_TEST_SOURCES})
             ${CMAKE_SOURCE_DIR}/include
             ${CMAKE_BINARY_DIR}/include
     )
+
+    if (MSVC)
+        target_compile_definitions(${test_target} PRIVATE _CRT_SECURE_NO_WARNINGS)
+    endif()
 
     if (BYTESTREAM_ENABLE_COVERAGE AND CMAKE_CXX_COMPILER_ID MATCHES "Clang|GNU")
         target_compile_options(${test_target} PRIVATE ${BYTESTREAM_COVERAGE_FLAGS})
