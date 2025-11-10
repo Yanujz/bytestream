@@ -29,17 +29,20 @@ jobs:
           -DBYTESTREAM_BUILD_EXAMPLES=ON
           -DBYTESTREAM_BUILD_BENCHMARKS=OFF
 
-      - name: Build
+      - name: Build (Unix)
+        if: runner.os != 'Windows'
+        run: cmake --build build
+
+      - name: Build (Windows)
+        if: runner.os == 'Windows'
         run: cmake --build build --config ${{ matrix.build_type }}
 
-      # single-config (Linux/macOS): no --config
       - name: Test (Unix)
         if: runner.os != 'Windows'
         working-directory: build
         run: ctest --output-on-failure
 
-      # multi-config (Windows): needs --config
       - name: Test (Windows)
         if: runner.os == 'Windows'
         working-directory: build
-        run: ctest --output-on-failure --config ${{ matrix.build_type }}
+        run: ctest --output-on-failure -C ${{ matrix.build_type }}
