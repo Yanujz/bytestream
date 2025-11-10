@@ -37,10 +37,6 @@ else()
     set(BYTESTREAM_WARNING_FLAGS -Wall -Wextra -Wpedantic)
 endif()
 
-if (MSVC)
-    target_compile_definitions(bytestream_tests PRIVATE _CRT_SECURE_NO_WARNINGS)
-endif()
-
 # version header generation
 set(BYTESTREAM_VERSION_MAJOR ${PROJECT_VERSION_MAJOR})
 set(BYTESTREAM_VERSION_MINOR ${PROJECT_VERSION_MINOR})
