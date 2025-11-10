@@ -6,30 +6,20 @@ project(ByteStream
     LANGUAGES CXX
 )
 
-# always nice to have
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
-# ------------------------------------------------------------------------------
-# Options
-# ------------------------------------------------------------------------------
-option(BYTESTREAM_BUILD_TESTS       "Build bytestream tests" ON)
-option(BYTESTREAM_BUILD_EXAMPLES    "Build bytestream examples" ON)
-option(BYTESTREAM_BUILD_BENCHMARKS  "Build bytestream benchmarks" OFF)
-option(BYTESTREAM_INSTALL           "Enable install rules for bytestream" ON)
+option(BYTESTREAM_BUILD_TESTS      "Build tests" ON)
+option(BYTESTREAM_BUILD_EXAMPLES   "Build examples" ON)
+option(BYTESTREAM_BUILD_BENCHMARKS "Build benchmarks" OFF)
+option(BYTESTREAM_INSTALL          "Install headers/targets" ON)
+option(BYTESTREAM_ENABLE_SANITIZERS "Enable sanitizers" OFF)
+option(BYTESTREAM_ENABLE_COVERAGE   "Enable coverage flags" OFF)
 
-option(BYTESTREAM_ENABLE_SANITIZERS "Enable address/UB sanitizers (Clang/GCC)" ON)
-option(BYTESTREAM_ENABLE_COVERAGE   "Enable coverage flags (Clang/GCC)" ON)
-
-# ------------------------------------------------------------------------------
-# C++ standard
-# ------------------------------------------------------------------------------
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
-# ------------------------------------------------------------------------------
-# Header-only library
-# ------------------------------------------------------------------------------
+# library (header-only)
 add_library(bytestream INTERFACE)
 add_library(ByteStream::bytestream ALIAS bytestream)
 
@@ -41,54 +31,83 @@ target_include_directories(bytestream
 
 target_compile_features(bytestream INTERFACE cxx_std_17)
 
-# ------------------------------------------------------------------------------
-# Warnings (for our own targets, we can export the list)
-# ------------------------------------------------------------------------------
-if (MSVC)
+if(MSVC)
     set(BYTESTREAM_WARNING_FLAGS /W4 /permissive-)
 else()
     set(BYTESTREAM_WARNING_FLAGS -Wall -Wextra -Wpedantic)
 endif()
 
-# ------------------------------------------------------------------------------
-# Sanitizers / Coverage: we just prepare variables for subdirs
-# ------------------------------------------------------------------------------
+# version header generation
+set(BYTESTREAM_VERSION_MAJOR ${PROJECT_VERSION_MAJOR})
+set(BYTESTREAM_VERSION_MINOR ${PROJECT_VERSION_MINOR})
+set(BYTESTREAM_VERSION_PATCH ${PROJECT_VERSION_PATCH})
+
+set(BYTESTREAM_VERSION_SUFFIX "" CACHE STRING "Optional version suffix")
+
+set(BYTESTREAM_GIT_HASH "")
+find_package(Git QUIET)
+if(Git_FOUND)
+    execute_process(
+        COMMAND ${GIT_EXECUTABLE} rev-parse --short HEAD
+        WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+        OUTPUT_VARIABLE BYTESTREAM_GIT_HASH
+        OUTPUT_STRIP_TRAILING_WHITESPACE
+        ERROR_QUIET
+    )
+endif()
+
+if(BYTESTREAM_VERSION_SUFFIX)
+    set(BYTESTREAM_HAS_SUFFIX 1)
+else()
+    set(BYTESTREAM_HAS_SUFFIX 0)
+endif()
+
+if(BYTESTREAM_GIT_HASH)
+    set(BYTESTREAM_HAS_GIT 1)
+else()
+    set(BYTESTREAM_HAS_GIT 0)
+endif()
+
+configure_file(
+    ${CMAKE_CURRENT_SOURCE_DIR}/include/bytestream/version.hpp.in
+    ${CMAKE_CURRENT_BINARY_DIR}/include/bytestream/version.hpp
+    @ONLY
+)
+
+target_include_directories(bytestream
+    INTERFACE
+        $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}/include>
+)
+
+# flags for subdirs
 set(BYTESTREAM_SANITIZER_FLAGS "")
-if (BYTESTREAM_ENABLE_SANITIZERS AND CMAKE_CXX_COMPILER_ID MATCHES "Clang|GNU")
+if(BYTESTREAM_ENABLE_SANITIZERS AND CMAKE_CXX_COMPILER_ID MATCHES "Clang|GNU")
     set(BYTESTREAM_SANITIZER_FLAGS -fsanitize=address,undefined -fno-omit-frame-pointer)
 endif()
 
 set(BYTESTREAM_COVERAGE_FLAGS "")
-if (BYTESTREAM_ENABLE_COVERAGE AND CMAKE_CXX_COMPILER_ID MATCHES "Clang|GNU")
+if(BYTESTREAM_ENABLE_COVERAGE AND CMAKE_CXX_COMPILER_ID MATCHES "Clang|GNU")
     set(BYTESTREAM_COVERAGE_FLAGS --coverage -O0 -g)
 endif()
 
-# ------------------------------------------------------------------------------
-# Examples
-# ------------------------------------------------------------------------------
-if (BYTESTREAM_BUILD_EXAMPLES)
-    add_subdirectory(examples)
-endif()
-
-# ------------------------------------------------------------------------------
-# Tests
-# ------------------------------------------------------------------------------
-if (BYTESTREAM_BUILD_TESTS)
+# tests
+if(BYTESTREAM_BUILD_TESTS)
     enable_testing()
     add_subdirectory(tests)
 endif()
 
-# ------------------------------------------------------------------------------
-# Benchmarks
-# ------------------------------------------------------------------------------
-if (BYTESTREAM_BUILD_BENCHMARKS)
+# examples
+if(BYTESTREAM_BUILD_EXAMPLES)
+    add_subdirectory(examples)
+endif()
+
+# benchmarks
+if(BYTESTREAM_BUILD_BENCHMARKS)
     add_subdirectory(benchmarks)
 endif()
 
-# ------------------------------------------------------------------------------
-# Install
-# ------------------------------------------------------------------------------
-if (BYTESTREAM_INSTALL)
+# install
+if(BYTESTREAM_INSTALL)
     include(GNUInstallDirs)
     include(CMakePackageConfigHelpers)
 
@@ -101,6 +120,11 @@ if (BYTESTREAM_INSTALL)
     install(
         DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/include/
         DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
+    )
+
+    install(
+        FILES ${CMAKE_CURRENT_BINARY_DIR}/include/bytestream/version.hpp
+        DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/bytestream
     )
 
     install(
