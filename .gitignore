@@ -1,63 +1,540 @@
-# Build directories
-build/
-cmake-build-*/
-out/
-bin/
-lib/
+#################################################################
+### 1. General ignores (Logs, Cache, Build Outputs)
+#################################################################
 
-# IDE files
-.vscode/
-.idea/
+# Logs
+*.log
+*.log.*
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Runtime data
+*.pid
+*.seed
+*.lock
+
+# Backups & Temp
+*.tmp
+*.bak
 *.swp
-*.swo
 *~
-.DS_Store
-*.code-workspace
+*.orig
+*.patch
+*.diff
+*.rej
+
+# Build output directories
+[Bb]uild/
+[Bb]in/
+[Oo]bj/
+[Rr]elease/
+[Dd]ebug/
+out/
+dist/
+target/
+artifacts/
 
 # Compiled files
 *.o
 *.obj
-*.so
-*.dylib
-*.dll
+*.ko
+*.elf
+*.slo
+*.lo
 *.a
 *.lib
+*.so
+*.so.*
+*.dll
+*.dylib
 *.exe
 *.out
+*.app
 
-# CMake
+# Java / Android
+*.class
+*.dex
+*.apk
+*.ap_
+*.aab
+
+# Headers & Intermediate files
+*.pch
+*.gch
+*.d
+*.ilk
+*.map
+*.exp
+*.pdb
+*.ipdb
+
+# Local configuration
+local.properties
+*.user
+*.userprefs
+
+#################################################################
+### 2. Operating System Files
+#################################################################
+
+### Windows
+Thumbs.db
+Thumbs.db:encryptable
+ehthumbs.db
+ehthumbs_vista.db
+*.stackdump
+[Dd]esktop.ini
+$RECYCLE.BIN/
+*.cab
+*.msi
+*.msix
+*.msm
+*.msp
+*.lnk
+
+### MacOS
+.DS_Store
+.AppleDouble
+.LSOverride
+._*
+.DocumentRevisions-V100
+.fseventsd
+.Spotlight-V100
+.TemporaryItems
+.Trashes
+.VolumeIcon.icns
+.com.apple.timemachine.donotpresent
+.AppleDB
+.AppleDesktop
+Network Trash Folder
+Temporary Items
+.apdisk
+
+### Linux
+*~
+.fuse_hidden*
+.directory
+.Trash-*
+.nfs*
+
+#################################################################
+### 3. IDE & Editor
+#################################################################
+
+### JetBrains (IntelliJ, Android Studio, PyCharm, etc.)
+.idea/
+*.iml
+*.iws
+*.ipr
+
+# Specific JetBrains files to ignore
+.idea/workspace.xml
+.idea/tasks.xml
+.idea/gradle.xml
+.idea/assetWizardSettings.xml
+.idea/dictionaries
+.idea/libraries
+.idea/caches
+.idea/modules.xml
+.idea/navEditor.xml
+.idea/usage.statistics.xml
+.idea/dataSources/
+.idea/dataSources.ids
+.idea/dataSources.local.xml
+.idea/sqlDataSources.xml
+.idea/dynamic.xml
+.idea/uiDesigner.xml
+.idea/dbnavigator.xml
+.idea/mongoSettings.xml
+.idea/replstate.xml
+.idea/httpRequests
+.idea/caches/build_file_checksums.ser
+
+# Android Studio / Crashlytics
+com_crashlytics_export_strings.xml
+crashlytics.properties
+crashlytics-build.properties
+fabric.properties
+
+### Visual Studio Code
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+*.code-workspace
+.history/
+.localhistory/
+
+### Visual Studio (General)
+*.rsuser
+*.suo
+*.userosscache
+*.sln.docstates
+.vs/
+mono_crash.*
+[Tt]est[Rr]esult*/
+[Bb]uild[Ll]og.*
+*_i.c
+*_p.c
+*_h.h
+*.meta
+*.iobj
+*.pgc
+*.pgd
+*.rsp
+*.sbr
+*.tlb
+*.tli
+*.tlh
+*_wpftmp.csproj
+*.vspscc
+*.vssscc
+.builds
+*.pidb
+*.svclog
+*.scc
+_Chutzpah*
+ipch/
+*.aps
+*.ncb
+*.opendb
+*.opensdf
+*.sdf
+*.cachefile
+*.VC.db
+*.VC.VC.opendb
+*.psess
+*.vsp
+*.vspx
+*.sap
+*.e2e
+$tf/
+*.gpState
+_ReSharper*/
+*.[Rr]e[Ss]harper
+*.DotSettings.user
+_TeamCity*
+*.dotCover
+.axoCover/*
+!.axoCover/settings.json
+coverage*[.json, .xml, .info]
+*.coverage
+*.coveragexml
+_NCrunch_*
+.*crunch*.local.xml
+nCrunchTemp_*
+*.mm.*
+AutoTest.Net/
+.sass-cache/
+[Ee]xpress/
+DocProject/buildhelp/
+DocProject/Help/
+publish/
+*.[Pp]ublish.xml
+*.azurePubxml
+*.pubxml
+*.publishproj
+PublishScripts/
+*.build.csdef
+ecf/
+rcf/
+AppPackages/
+BundleArtifacts/
+Package.StoreAssociation.xml
+_pkginfo.txt
+*.appx
+*.appxbundle
+*.appxupload
+*.[Cc]ache
+!?*.[Cc]ache/
+ClientBin/
+~$*
+*.dbmdl
+*.dbproj.schemaview
+*.jfm
+*.pfx
+*.publishsettings
+orleans.codegen.cs
+# *.snk
+_UpgradeReport_Files/
+Backup*/
+UpgradeLog*.XML
+UpgradeLog*.htm
+ServiceFabricBackup/
+*.mdf
+*.ldf
+*.ndf
+*.rdl.data
+*.bim.layout
+*.bim_*.settings
+*.rptproj.rsuser
+FakesAssemblies/
+*.GhostDoc.xml
+.ntvs_analysis.dat
+*.plg
+*.opt
+*.vbw
+.paket/paket.exe
+paket-files/
+.fake/
+.cr/personal
+*.tss
+*.jmconfig
+*.btp.cs
+*.btm.cs
+*.odx.cs
+*.xsd.cs
+OpenCover/
+ASALocalRun/
+*.binlog
+*.nvuser
+.mfractor/
+healthchecksdb
+MigrationBackup/
+.ionide/
+FodyWeavers.xsd
+
+### Eclipse
+.metadata
+.settings/
+.loadpath
+.recommenders
+.externalToolBuilders/
+*.launch
+*.pydevproject
+.cproject
+.autotools
+.factorypath
+.buildpath
+.springBeans
+.apt_generated/
+.apt_generated_test/
+.cache-main
+.scala_dependencies
+.worksheet
+# .project
+
+### NetBeans
+**/nbproject/private/
+**/nbproject/Makefile-*.mk
+**/nbproject/Package-*.bash
+nbbuild/
+nbdist/
+.nb-gradle/
+
+### Qt Creator
+*.pro.user
+*.pro.user.*
+*.qbs.user
+*.qbs.user.*
+*.autosave
+*.qmlproject.user
+*.qmlproject.user.*
+CMakeLists.txt.user*
+*creator.user*
+
+### Sublime Text
+*.sublime-workspace
+*.sublime-project
+sftp-config.json
+sftp-config-alt*.json
+Package Control.last-run
+Package Control.ca-list
+Package Control.ca-bundle
+Package Control.system-ca-bundle
+Package Control.cache/
+Package Control.ca-certs/
+Package Control.merged-ca-bundle
+Package Control.user-ca-bundle
+oscrypto-ca-bundle.crt
+bh_unicode_properties.cache
+GitHub.sublime-settings
+
+### Vim
+[._]*.s[a-v][a-z]
+[._]*.sw[a-p]
+[._]s[a-rt-v][a-z]
+[._]ss[a-gi-z]
+[._]sw[a-p]
+Session.vim
+Sessionx.vim
+.netrwhist
+tags
+[._]*.un~
+
+### Emacs
+\#*\#
+/.emacs.desktop
+/.emacs.desktop.lock
+*.elc
+auto-save-list
+tramp
+.\#*
+.org-id-locations
+*_archive
+*_flymake.*
+/eshell/history
+/eshell/lastdir
+/elpa/
+*.rel
+/auto/
+.cask/
+flycheck_*.el
+/server/
+.projectile
+.dir-locals.el
+/network-security.data
+
+### TextMate
+*.tmproj
+*.tmproject
+tmtags
+
+#################################################################
+### 4. Language / Framework Specific
+#################################################################
+
+### Android (non-IDE files)
+gen/
+proguard/
+.navigation/
+captures/
+# *.jks
+# *.keystore
+.externalNativeBuild
+# google-services.json
+freeline.py
+freeline/
+freeline_project_description.json
+fastlane/report.xml
+fastlane/Preview.html
+fastlane/screenshots
+fastlane/test_output
+fastlane/readme.md
+
+### Python
+__pycache__/
+*.pyc
+*.pyo
+
+### Node.js
+node_modules/
+.npm
+
+### Qt (non-IDE files)
+object_script.*.Release
+object_script.*.Debug
+*_plugin_import.cpp
+/.qmake.cache
+/.qmake.stash
+*.moc
+moc_*.cpp
+moc_*.h
+qrc_*.cpp
+ui_*.h
+*.qmlc
+*.jsc
+Makefile*
+*build-*
+*.qm
+*.prl
+target_wrapper.*
+compile_commands.json
+
+### C/C++ / Fortran
+*.mod
+*.smod
+*.dSYM/
+*.su
+*.idb
+
+### Raspberry Pi Pico
+*.uf2
+*.dis
+
+### MkDocs
+site/
+
+#################################################################
+### 5. Build Systems
+#################################################################
+
+### Gradle
+.gradle
+**/build/
+!src/**/build/
+!gradle-wrapper.jar
+.gradletasknamecache
+
+### CMake
+CMakeLists.txt.user
 CMakeCache.txt
 CMakeFiles/
+CMakeScripts/
+Testing/
+Makefile
 cmake_install.cmake
 install_manifest.txt
+compile_commands.json
 CTestTestfile.cmake
-Testing/
 _deps/
 
-# Coverage
-*.gcda
-*.gcno
-*.gcov
-coverage/
-*.lcov
-coverage.info
+#################################################################
+### 6. Version Control
+#################################################################
 
-# Sanitizer outputs
-*.asan
-*.ubsan
-*.tsan
-*.msan
+### Subversion
+.svn/
 
-# Package managers
-vcpkg_installed/
-conan.lock
-*.user
+### Mercurial
+.hg/
+.hgignore
+.hgsigs
+.hgsub
+.hgsubstate
+.hgtags
 
-# Documentation build
-docs/_build/
-docs/doxygen/
+### Bazaar
+.bzr/
+.bzrignore
 
-# Temporary files
-*.tmp
-*.bak
-*.log
+### CVS
+/CVS/*
+**/CVS/*
+.cvsignore
+*/.cvsignore
+
+### TortoiseGit
+/.tgitconfig
+
+#################################################################
+### 7. Other Tools
+#################################################################
+
+### PuTTY
+*.ppk
+
+### GPG
+secring.*
+
+### Dropbox
+.dropbox
+.dropbox.attr
+.dropbox.cache
+
+### SynopsysVCS
+*.vcd
+*.vpd
+*.evcd
+*.fsdb
+simv
+simv.daidir/
+simv.db.dir/
+csrc/
+simv.vdb/
+urgReport/
+DVEfiles/
+ucli.key
+vc_hdrs.h
