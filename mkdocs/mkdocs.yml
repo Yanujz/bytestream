@@ -49,7 +49,6 @@ theme:
 plugins:
   - search
 
-# drop these if you don't actually have them in docs/styles/
 extra_css:
   - styles/tasklist.css
   - styles/iframe.css
