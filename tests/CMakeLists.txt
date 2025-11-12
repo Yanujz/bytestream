@@ -34,6 +34,7 @@ add_subdirectory(reader)
 add_subdirectory(writer)
 add_subdirectory(roundtrip)
 add_subdirectory(endian)
+add_subdirectory(serialization)
 
 # now retrieve everything the subdirs appended
 get_property(BYTESTREAM_TEST_SOURCES GLOBAL PROPERTY BYTESTREAM_TEST_SOURCES)

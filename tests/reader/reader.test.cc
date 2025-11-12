@@ -19,7 +19,6 @@ protected:
     }
 };
 
-// Basic
 TEST_F(ReaderTest, Construction)
 {
     Reader reader(buffer.data(), buffer.size());
@@ -48,7 +47,6 @@ TEST_F(ReaderTest, SpanConstruction)
     EXPECT_EQ(reader.size(), buffer.size());
 }
 
-// Position
 TEST_F(ReaderTest, Seek)
 {
     Reader reader(buffer.data(), buffer.size());
@@ -96,7 +94,6 @@ TEST_F(ReaderTest, SkipBeyondEnd)
     EXPECT_THROW(reader.skip(11), UnderflowException);
 }
 
-// Alignment
 TEST_F(ReaderTest, Alignment)
 {
     Reader reader(buffer.data(), buffer.size());
@@ -111,7 +108,6 @@ TEST_F(ReaderTest, Alignment)
     EXPECT_TRUE(reader.is_aligned(16));
 }
 
-// Primitive reads
 TEST_F(ReaderTest, ReadUint8)
 {
     buffer[0] = 0x42;
@@ -207,7 +203,6 @@ TEST_F(ReaderTest, ReadDouble)
     EXPECT_DOUBLE_EQ(value, test_val);
 }
 
-// Peek
 TEST_F(ReaderTest, Peek)
 {
     buffer[0] = 0x42;
@@ -237,7 +232,6 @@ TEST_F(ReaderTest, PeekLE)
     EXPECT_EQ(reader.position(), 0);
 }
 
-// Bulk
 TEST_F(ReaderTest, ReadBytes)
 {
     for(std::size_t i = 0; i < 10; ++i)
@@ -292,7 +286,6 @@ TEST_F(ReaderTest, ReadArrayLE)
     EXPECT_EQ(dest[1], 0x5678);
 }
 
-// Strings
 TEST_F(ReaderTest, ReadString)
 {
     std::string s = "Hello, World!";
@@ -348,7 +341,6 @@ TEST_F(ReaderTest, ViewString)
     EXPECT_EQ(reader.position(), s.size());
 }
 
-// Subviews
 TEST_F(ReaderTest, Subview)
 {
     for(std::size_t i = 0; i < 100; ++i)
@@ -385,7 +377,6 @@ TEST_F(ReaderTest, SubviewOutOfBounds)
     }, std::out_of_range);
 }
 
-// Errors
 TEST_F(ReaderTest, ReadBeyondEnd)
 {
     Reader reader(buffer.data(), 4);

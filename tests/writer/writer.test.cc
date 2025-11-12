@@ -230,3 +230,136 @@ TEST_F(WriterTest, AsReader)
     std::uint32_t v = reader.read<std::uint32_t>();
     EXPECT_EQ(v, 0x12345678);
 }
+
+TEST(ExtrasTest, WrittenBytesAndRemainingView) {
+    std::vector<std::byte> buf(64);
+    Writer w(buf.data(), buf.size());
+
+    uint32_t a = 0x11223344u;
+    float    b = 3.25f;
+
+    w.write_le<uint32_t>(a);
+    w.write<float>(b);
+
+    EXPECT_EQ(w.written_bytes(), sizeof(uint32_t) + sizeof(float));
+
+    Reader r(buf.data(), buf.size());
+    r.skip(sizeof(uint32_t));
+
+    auto view = r.remaining_bytes_view();
+    ASSERT_EQ(view.size(), buf.size() - sizeof(uint32_t));
+    float f = 0.0f;
+    std::memcpy(&f, view.data(), sizeof(float));
+    EXPECT_EQ(f, b);
+}
+
+TEST(ExtrasTest, StringWithEmbeddedNulls) {
+    std::vector<uint8_t> buf(128, 0);
+
+    std::string s1 = std::string("abc\0def", 7);
+
+    Writer w(buf.data(), buf.size());
+    write_field(w, s1);
+
+    Reader r(buf.data(), buf.size());
+    std::string s2 = read_field<std::string>(r);
+
+    ASSERT_EQ(s2.size(), 7u);
+    EXPECT_EQ(s2, s1);
+    EXPECT_EQ(s2[3], '\0');
+}
+
+TEST(ExtrasTest, ArrayBigEndianRoundTrip) {
+    std::vector<uint8_t> raw(16, 0);
+    Writer w(raw.data(), raw.size());
+
+    std::array<uint16_t, 3> arr = {0x1234u, 0xABCDu, 0x0042u};
+    w.write_array_be<uint16_t>({arr.data(), arr.size()});
+
+    EXPECT_EQ(raw[0], 0x12);
+    EXPECT_EQ(raw[1], 0x34);
+    EXPECT_EQ(raw[2], 0xAB);
+    EXPECT_EQ(raw[3], 0xCD);
+    EXPECT_EQ(raw[4], 0x00);
+    EXPECT_EQ(raw[5], 0x42);
+
+    Reader r(raw.data(), raw.size());
+    std::array<uint16_t, 3> out{};
+    r.read_array_be<uint16_t>({out.data(), out.size()});
+
+    EXPECT_EQ(out, arr);
+}
+
+struct Vehicle : public Serializable<Vehicle> {
+    std::string model;
+    uint32_t year{};
+
+    Vehicle() = default;
+    Vehicle(std::string_view m, uint32_t y) : model(m), year(y) {}
+
+    void serialize_impl(Writer& w) const {
+        write_fields(w, model, year);
+    }
+    void deserialize_impl(Reader& r) {
+        model = read_field<std::string>(r);
+        year  = read_field<uint32_t>(r);
+    }
+};
+
+TEST(ExtrasTest, CRTPVehicleRoundTrip) {
+    std::vector<uint8_t> buf(256, 0);
+    Vehicle v1{ "Tesla Model 3", 2023 };
+
+    Writer w(buf.data(), buf.size());
+    write_field(w, v1);
+
+    Reader r(buf.data(), buf.size());
+    Vehicle v2 = read_field<Vehicle>(r);
+
+    EXPECT_EQ(v2.model, "Tesla Model 3");
+    EXPECT_EQ(v2.year, 2023);
+
+    EXPECT_TRUE((detail::is_serializable_v<Vehicle>));
+}
+
+struct Pair : public Serializable<Pair> {
+    int32_t  a{};
+    std::string b;
+
+    Pair() = default;
+    Pair(int32_t aa, std::string bb) : a(aa), b(std::move(bb)) {}
+    void serialize_impl(Writer& w) const { write_fields(w, a, b); }
+    void deserialize_impl(Reader& r) {
+        a = read_field<int32_t>(r);
+        b = read_field<std::string>(r);
+    }
+};
+
+TEST(ExtrasTest, WriteFieldsMixPODAndCustom) {
+    std::vector<uint8_t> buf(256, 0);
+    int32_t x = -42;
+    Pair    p{ int32_t(7), std::string("seven") };
+
+    Writer w(buf.data(), buf.size());
+    write_fields(w, x, p);
+
+    Reader r(buf.data(), buf.size());
+    int32_t x2 = read_field<int32_t>(r);
+    Pair    p2 = read_field<Pair>(r);
+
+    EXPECT_EQ(x2, -42);
+    EXPECT_EQ(p2.a, 7);
+    EXPECT_EQ(p2.b, "seven");
+}
+
+TEST(ExtrasTest, ReadSizedStringTruncated) {
+    std::array<uint8_t, 7> buf{};
+    Writer w(buf.data(), buf.size());
+    w.write_le<uint32_t>(10);
+    w.write_string("abc");
+
+    Reader r(buf.data(), buf.size());
+    EXPECT_THROW({
+        (void)r.read_sized_string_le();
+    }, UnderflowException);
+}

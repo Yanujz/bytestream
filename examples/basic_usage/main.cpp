@@ -99,7 +99,7 @@ void example_arrays()
 
         std::array<std::int32_t, 5> data = { 10, 20, 30, 40, 50 };
 
-        writer.write_array_le(bytestream::span<const std::int32_t>(
+        writer.write_array(bytestream::span<const std::int32_t>(
             data.data(), data.size()
         ));
 

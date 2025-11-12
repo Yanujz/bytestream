@@ -5,5 +5,6 @@
 #include <bytestream/reader.hpp>
 #include <bytestream/writer.hpp>
 #include <bytestream/stream.hpp>
+#include <bytestream/serialization.hpp> 
 
 #endif // BYTESTREAM_CORE_HPP
