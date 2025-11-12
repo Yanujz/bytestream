@@ -5,12 +5,12 @@ on:
     branches: [ main, master ]
   pull_request:
     branches: [ main, master ]
+  workflow_dispatch:
 
 jobs:
   build-and-test:
     name: ${{ matrix.os }} / ${{ matrix.build_type }}
     runs-on: ${{ matrix.os }}
-
     strategy:
       fail-fast: false
       matrix:
@@ -46,3 +46,111 @@ jobs:
         if: runner.os == 'Windows'
         working-directory: build
         run: ctest --output-on-failure -C ${{ matrix.build_type }}
+
+  coverage:
+    name: Coverage (ubuntu / clang / Debug)
+    runs-on: ubuntu-latest
+    needs: build-and-test
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install deps (clang + cmake + gcovr)
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y clang llvm cmake
+          python3 -m pip install --upgrade pip
+          python3 -m pip install gcovr
+
+      - name: Configure with coverage flags (clang)
+        run: >
+          cmake -S . -B build-coverage
+          -DCMAKE_BUILD_TYPE=Debug
+          -DBYTESTREAM_BUILD_TESTS=ON
+          -DBYTESTREAM_BUILD_EXAMPLES=OFF
+          -DBYTESTREAM_BUILD_BENCHMARKS=OFF
+          -DCMAKE_C_COMPILER=clang
+          -DCMAKE_CXX_COMPILER=clang++
+          -DCMAKE_C_FLAGS="--coverage -O0 -g"
+          -DCMAKE_CXX_FLAGS="--coverage -O0 -g"
+          -DCMAKE_EXE_LINKER_FLAGS="--coverage"
+          -DCMAKE_SHARED_LINKER_FLAGS="--coverage"
+
+      - name: Build (coverage)
+        run: cmake --build build-coverage -j
+
+      - name: Test (coverage)
+        working-directory: build-coverage
+        run: ctest --output-on-failure
+
+      - name: Generate self-contained HTML coverage (gcovr + llvm-cov gcov)
+        shell: bash
+        run: |
+          mkdir -p mkdocs/docs/coverage
+          gcovr -r . build-coverage \
+            --object-directory build-coverage \
+            --filter "$(pwd)/src" \
+            --filter "$(pwd)/include" \
+            --exclude '.*build-coverage/_deps.*' \
+            --exclude '.*examples.*' \
+            --exclude '.*tests/.*' \
+            --html --html-details --html-self-contained \
+            --gcov-executable "llvm-cov gcov" \
+            -o mkdocs/docs/coverage/index.html
+
+      - name: Upload coverage HTML (for docs job)
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-html
+          path: mkdocs/docs/coverage
+          if-no-files-found: error
+          retention-days: 14
+
+  docs:
+    name: Build & Publish Docs (with coverage)
+    needs: [build-and-test, coverage]
+    if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master')
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
+
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.x'
+
+      - name: Install MkDocs
+        run: pip install mkdocs mkdocs-material
+
+      - name: Pull coverage HTML into docs tree
+        uses: actions/download-artifact@v4
+        with:
+          name: coverage-html
+          path: mkdocs/docs/coverage
+
+      - name: Build MkDocs site
+        run: mkdocs build --strict --site-dir site
+
+      - name: Setup Pages
+        uses: actions/configure-pages@v5
+
+      - name: Upload artifact (site)
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: site
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
