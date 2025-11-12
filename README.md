@@ -1,10 +1,19 @@
 # ByteStream
 
 [![Build](https://img.shields.io/github/actions/workflow/status/yanujz/bytestream/ci.yml?label=build&branch=main)](https://github.com/yanujz/bytestream/actions)
+[![Docs](https://img.shields.io/website?url=https%3A%2F%2Fyanujz.github.io%2Fbytestream&label=docs)](https://yanujz.github.io/bytestream)
+[![Coverage](https://img.shields.io/endpoint?url=https://yanujz.github.io/bytestream/badges/coverage.json)](https://yanujz.github.io/bytestream/coverage/)
+
 ![C++](https://img.shields.io/badge/C%2B%2B-17-blue)
-![License](https://img.shields.io/badge/License-MIT-green.svg)
 ![Build System](https://img.shields.io/badge/build-CMake-blueviolet)
-![Status](https://img.shields.io/badge/status-experimental-orange)
+[![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
+![Platforms](https://img.shields.io/badge/platforms-linux%20%7C%20macOS%20%7C%20windows-informational)
+
+[![Release](https://img.shields.io/github/v/release/yanujz/bytestream)](https://github.com/yanujz/bytestream/releases)
+[![Last commit](https://img.shields.io/github/last-commit/yanujz/bytestream?logo=github)](https://github.com/yanujz/bytestream/commits)
+[![Issues](https://img.shields.io/github/issues/yanujz/bytestream)](https://github.com/yanujz/bytestream/issues)
+[![PRs](https://img.shields.io/github/issues-pr/yanujz/bytestream)](https://github.com/yanujz/bytestream/pulls)
+
 
 A simple, modern C++17/20 library for binary I/O on fixed-size memory buffers.
 
